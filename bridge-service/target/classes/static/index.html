@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><title>Event Streaming Bridge</title>
+<style>body{font:14px system-ui;margin:0;background:#f4f7f5}header{background:#1b7a43;color:#fff;padding:1rem 1.5rem}h1{margin:0;font-size:1.2rem}main{padding:1rem 1.5rem}table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:.4rem .6rem;border-bottom:1px solid #ddd;text-align:left;font-size:12px}th{background:#e3f1e8}.cards{display:flex;gap:1rem;margin-bottom:1rem}.c{background:#fff;padding:.8rem 1.2rem;border-radius:6px;border-left:5px solid #1b7a43}.c b{font-size:1.5rem;display:block}.FAILED{color:#b3261e}.live{color:#9fe3b6;float:right}input{padding:.4rem;width:260px}</style>
+<header><h1>Event Streaming Bridge <span class="live" id="live">connecting…</span></h1></header>
+<main><div class="cards"><div class="c"><b id="n1">0</b>Pending</div><div class="c"><b id="n2">0</b>Completed</div><div class="c"><b id="n3">0</b>Failed / timeout</div></div>
+<h3>Live event audit &nbsp; <input id="q" placeholder="Filter by PNR / Offer ID / Order ID" oninput="draw()"></h3>
+<table><thead><tr><th>Time</th><th>Direction</th><th>Event</th><th>Status</th><th>PNR</th><th>Offer ID</th><th>Order ID</th><th>Correlation</th></tr></thead><tbody id="rows"></tbody></table></main>
+<script>
+let all=[];const e=v=>v||'';
+const row=a=>`<tr><td>${new Date(a.createdAt).toLocaleTimeString()}</td><td>${a.direction}</td><td>${a.eventType}</td><td class="${/FAIL/.test(a.status)?'FAILED':''}">${a.status}</td><td><b>${e(a.pnr)}</b></td><td>${e(a.offerId)}</td><td>${e(a.orderId)}</td><td>${e(a.correlationId).slice(0,8)}</td></tr>`;
+const draw=()=>{const f=q.value.toLowerCase();rows.innerHTML=all.filter(a=>!f||[a.pnr,a.offerId,a.orderId].some(x=>(x||'').toLowerCase().includes(f))).map(row).join('')};
+fetch('/api/audit').then(r=>r.json()).then(l=>{all=l;draw()});
+const stats=()=>fetch('/api/correlations').then(r=>r.json()).then(l=>{n1.textContent=l.filter(c=>c.status=='PENDING').length;n2.textContent=l.filter(c=>c.status=='COMPLETED').length;n3.textContent=l.filter(c=>/FAILED|TIMEOUT/.test(c.status)).length});stats();
+const ws=new WebSocket(`ws://${location.host}/ws/monitor`);ws.onopen=()=>live.textContent='● live';ws.onclose=()=>live.textContent='offline';
+ws.onmessage=m=>{all.unshift(JSON.parse(m.data));draw();stats()};
+</script>

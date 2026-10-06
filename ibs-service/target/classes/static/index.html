@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>IBS – Inventory & Booking</title>
+<style>body{font:14px system-ui;margin:0;background:#f5f3fa}header{background:#6a3fc4;color:#fff;padding:1rem 1.5rem}h1{margin:0;font-size:1.2rem}main{padding:1rem 1.5rem}table{width:100%;border-collapse:collapse;background:#fff;margin-bottom:1rem}th,td{padding:.4rem .6rem;border-bottom:1px solid #ddd;text-align:left;font-size:12px}th{background:#e8e0f7}.live{float:right;color:#d9c9ff}#feed{background:#fff;padding:.6rem;font:12px monospace;max-height:150px;overflow:auto;margin-bottom:1rem}input{padding:.4rem}</style>
+<header><h1>IBS – Sleeper pod inventory <span class="live" id="live">connecting…</span></h1></header>
+<main><h3>Live events</h3><div id="feed"></div>
+<h3>Find by PNR / Offer ID / Order ID <input id="q" size="30" oninput="load()"></h3>
+<h3>Pre-bookings</h3><table><thead><tr><th>Offer ID</th><th>PNR</th><th>Order ID</th><th>Flight</th><th>Session</th><th>Pod</th><th>Price</th><th>Status</th><th>Expires</th></tr></thead><tbody id="pre"></tbody></table>
+<h3>IBS orders</h3><table><thead><tr><th>Order ID</th><th>Offer ID</th><th>PNR</th><th>Total</th><th>Status</th></tr></thead><tbody id="ord"></tbody></table>
+<h3>Inventory <input id="fn" value="AL001" size="6"> <input id="dt" type="date"> <button onclick="inv()">Load</button></h3><table><thead><tr><th>Session</th><th>Pod</th><th>Price</th><th>Available</th></tr></thead><tbody id="inv"></tbody></table></main>
+<script>
+dt.value=new Date().toISOString().slice(0,10);const hit=a=>{const f=q.value.toLowerCase();return !f||a.some(x=>(x||'').toLowerCase().includes(f))};
+const inv=()=>fetch(`/api/inventory?flightNo=${fn.value}&date=${dt.value}`).then(r=>r.json()).then(d=>{document.getElementById('inv').innerHTML=(d.sessions||[]).flatMap(s=>s.nests.map(n=>`<tr><td>${s.label}</td><td>${n.label}</td><td>$${n.price}</td><td>${n.available?'yes':'no'}</td></tr>`)).join('')||`<tr><td colspan=4>${d.reason||''}</td></tr>`});
+const load=()=>{inv();fetch('/api/prebookings').then(r=>r.json()).then(l=>pre.innerHTML=l.filter(p=>hit([p.pnr,p.offerId,p.orderId])).map(p=>`<tr><td>${p.offerId}</td><td><b>${p.pnr}</b></td><td>${p.orderId||''}</td><td>${p.flight}</td><td>${p.session}</td><td>${p.nest}</td><td>$${p.price}</td><td>${p.status}</td><td>${new Date(p.expiresAt).toLocaleTimeString()}</td></tr>`).join(''));
+ fetch('/api/orders').then(r=>r.json()).then(l=>ord.innerHTML=l.filter(o=>hit([o.pnr,o.offerId,o.orderId])).map(o=>`<tr><td>${o.orderId}</td><td>${o.offerId}</td><td><b>${o.pnr}</b></td><td>$${o.total}</td><td>${o.status}</td></tr>`).join(''))};load();
+const ws=new WebSocket(`ws://${location.host}/ws/ibs`);ws.onopen=()=>live.textContent='● live';ws.onclose=()=>live.textContent='offline';
+ws.onmessage=e=>{const m=JSON.parse(e.data);feed.insertAdjacentHTML('afterbegin',`<div>${new Date().toLocaleTimeString()} ${m.event} pnr=${m.pnr} success=${m.success}</div>`);load()};
+</script>

@@ -1,0 +1,17 @@
+com\tsi\aerolyn\bridge\Out.class
+com\tsi\aerolyn\bridge\MonitorSocket.class
+com\tsi\aerolyn\bridge\Correlation.class
+com\tsi\aerolyn\bridge\CorrelationRepo.class
+com\tsi\aerolyn\bridge\RoutingRule.class
+com\tsi\aerolyn\bridge\DeadRepo.class
+com\tsi\aerolyn\bridge\Models.class
+com\tsi\aerolyn\bridge\WsConfig.class
+com\tsi\aerolyn\bridge\Bridge.class
+com\tsi\aerolyn\bridge\AuditRepo.class
+com\tsi\aerolyn\bridge\BridgeApp.class
+com\tsi\aerolyn\bridge\EventAudit.class
+com\tsi\aerolyn\bridge\KafkaIn.class
+com\tsi\aerolyn\bridge\DeadLetter.class
+com\tsi\aerolyn\bridge\RuleRepo.class
+com\tsi\aerolyn\bridge\BridgeController.class
+com\tsi\aerolyn\bridge\Envelope.class
